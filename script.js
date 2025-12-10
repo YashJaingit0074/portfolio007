@@ -558,8 +558,8 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializePortfolio() {
-    // Initialize 3D scene
-    init3DScene();
+    // Initialize 3D scene - DISABLED (handled by avatar.js)
+    // init3DScene();
     
     // Initialize navigation
     initializeNavigation();
