@@ -587,6 +587,9 @@ function initializePortfolio() {
 // ===============================================
 // 3D SCENE SETUP
 // ===============================================
+// DISABLED: 3D Scene functions (handled by avatar.js)
+// ===============================================
+/*
 function init3DScene() {
     // Create scene
     scene = new THREE.Scene();
@@ -969,10 +972,12 @@ function initializeContactForm() {
         });
     }
 }
+*/
 
 // ===============================================
-// PARTICLE SYSTEM
+// PARTICLE SYSTEM (DISABLED)
 // ===============================================
+/*
 function createParticleSystem() {
     const particlesOverlay = document.getElementById('particles-overlay');
     
@@ -1145,5 +1150,6 @@ document.addEventListener('visibilitychange', function() {
         // });
     }
 });
+*/
 
-console.log('🚀 3D Portfolio initialized successfully!');
+console.log('✅ Portfolio initialized successfully!');
