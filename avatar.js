@@ -79,8 +79,8 @@ function setupScene(gltf) {
 
     // Camera setup - better position for full body view
     const camera = new THREE.PerspectiveCamera(
-      60, container.clientWidth / container.clientHeight, 0.1, 1000);
-    camera.position.set(0, 1, 4);
+      50, container.clientWidth / container.clientHeight, 0.1, 1000);
+    camera.position.set(0, 0.5, 5);
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
@@ -146,7 +146,7 @@ function setupScene(gltf) {
     console.log('Model scaled by:', scale, 'Original size:', maxDimension);
     
     // Center the model properly for full body display
-    avatar.position.set(0, -(size.y * scale) / 3, 0); // Position to show full body
+    avatar.position.set(0, 0, 0); // Center at origin for full body view
     
     // Enhance materials for darker, more dramatic appearance
     avatar.traverse((child) => {
