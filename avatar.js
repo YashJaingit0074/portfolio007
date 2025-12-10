@@ -77,12 +77,12 @@ async function initAvatar() {
 
   // Load model
   try {
-    console.log('Loading 3D model from /public/46936_autosave.glb');
+    console.log('Loading 3D model from /46936_autosave.glb');
     const loader = new GLTFLoader();
     
     const gltf = await new Promise((resolve, reject) => {
       loader.load(
-        '/public/46936_autosave.glb',
+        '/46936_autosave.glb',
         resolve,
         (xhr) => {
           const progress = Math.round((xhr.loaded / xhr.total) * 100);
