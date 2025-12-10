@@ -8,9 +8,19 @@ async function initAvatar() {
   const container = document.getElementById('avatar-container');
   const loadingElement = document.getElementById('avatar-loading');
   
+  console.log('Container:', container);
+  console.log('Container size:', container?.clientWidth, 'x', container?.clientHeight);
+  
   if (!container) {
     console.error('Avatar container not found!');
     return;
+  }
+
+  // Ensure container has size
+  if (container.clientWidth === 0 || container.clientHeight === 0) {
+    console.warn('Container has no size, setting defaults');
+    container.style.width = '100%';
+    container.style.height = '100%';
   }
 
   // Setup scene
@@ -24,7 +34,9 @@ async function initAvatar() {
     0.1,
     1000
   );
-  camera.position.set(0, 0.5, 5);
+  camera.position.set(0, 1, 3);
+  camera.lookAt(0, 0, 0);
+  console.log('Camera position:', camera.position);
 
   // Setup renderer
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -44,19 +56,20 @@ async function initAvatar() {
   controls.maxDistance = 10;
   controls.update();
 
-  // Lighting
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+  // Lighting - increase brightness to ensure visibility
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
   scene.add(ambientLight);
+  console.log('Added ambient light');
 
-  const keyLight = new THREE.DirectionalLight(0xffffff, 0.8);
+  const keyLight = new THREE.DirectionalLight(0xffffff, 1.2);
   keyLight.position.set(5, 10, 5);
   scene.add(keyLight);
 
-  const fillLight = new THREE.DirectionalLight(0xffffff, 0.4);
+  const fillLight = new THREE.DirectionalLight(0xffffff, 0.6);
   fillLight.position.set(-5, 5, -5);
   scene.add(fillLight);
 
-  const frontLight = new THREE.DirectionalLight(0xffffff, 0.3);
+  const frontLight = new THREE.DirectionalLight(0xffffff, 0.5);
   frontLight.position.set(0, 5, 10);
   scene.add(frontLight);
 
