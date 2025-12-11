@@ -1,221 +1,144 @@
-// Use CDN modules with proper module URLs
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js';
-import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/loaders/GLTFLoader.js';
-import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/controls/OrbitControls.js';
 
-let scene, camera, renderer, controls;
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-async function initAvatar() {
-  console.log('=== AVATAR INIT START ===');
-  const container = document.getElementById('avatar-container');
-  const loadingElement = document.getElementById('avatar-loading');
-  
-  if (!container) {
-    console.error('❌ Avatar container not found!');
-    return;
-  }
-  
-  console.log('✅ Container found');
-  console.log('Container size:', container.clientWidth, 'x', container.clientHeight);
-  
-  // Wait for container to have size
-  if (container.clientWidth === 0 || container.clientHeight === 0) {
-    console.warn('⏳ Container has no size, waiting...');
-    await new Promise(resolve => setTimeout(resolve, 100));
-    console.log('New container size:', container.clientWidth, 'x', container.clientHeight);
-  }
+window.onload = () => loadModel();
 
-  // Setup scene
-  scene = new THREE.Scene();
-  scene.background = null;
-
-  // Setup camera
-  camera = new THREE.PerspectiveCamera(
-    50,
-    container.clientWidth / container.clientHeight,
-    0.1,
-    1000
+function loadModel() {
+  const loader = new GLTFLoader();
+  loader.load('46936_autosave.glb',
+    (gltf) => {
+      setupScene(gltf);
+      document.getElementById('avatar-loading').style.display = 'none';
+    }, 
+    (xhr) => {
+      const percentCompletion = Math.round((xhr.loaded / xhr.total) * 100);
+      document.getElementById('avatar-loading').innerText = `LOADING... ${percentCompletion}%`
+      console.log(`Loading model... ${percentCompletion}%`);
+    }, 
+    (error) => {
+      console.log(error);
+    }
   );
-  camera.position.set(0, 1, 3);
-  camera.lookAt(0, 0, 0);
-  console.log('Camera position:', camera.position);
+}
 
-  // Setup renderer
-  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setSize(container.clientWidth, container.clientHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 0.8;
-  container.appendChild(renderer.domElement);
-
-  // Setup controls
-  controls = new OrbitControls(camera, renderer.domElement);
-  controls.enableDamping = true;
-  controls.dampingFactor = 0.1;
-  controls.enableZoom = true;
-  controls.minDistance = 2.5;
-  controls.maxDistance = 10;
-  controls.update();
-
-  // Lighting - increase brightness to ensure visibility
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-  scene.add(ambientLight);
-  console.log('Added ambient light');
-
-  const keyLight = new THREE.DirectionalLight(0xffffff, 1.2);
-  keyLight.position.set(5, 10, 5);
-  scene.add(keyLight);
-
-  const fillLight = new THREE.DirectionalLight(0xffffff, 0.6);
-  fillLight.position.set(-5, 5, -5);
-  scene.add(fillLight);
-
-  const frontLight = new THREE.DirectionalLight(0xffffff, 0.5);
-  frontLight.position.set(0, 5, 10);
-  scene.add(frontLight);
-
-  // Load model
-  try {
-    console.log('Loading 3D model from /46936_autosave.glb');
-    const loader = new GLTFLoader();
-    
-    const gltf = await new Promise((resolve, reject) => {
-      loader.load(
-        '/46936_autosave.glb',
-        resolve,
-        (xhr) => {
-          const progress = Math.round((xhr.loaded / xhr.total) * 100);
-          if (loadingElement) {
-            loadingElement.innerText = `LOADING... ${progress}%`;
-          }
-        },
-        reject
-      );
+function setupScene(gltf) {
+    const renderer = new THREE.WebGLRenderer({ 
+      antialias: true, 
+      alpha: true 
     });
-
-    console.log('Model loaded successfully:', gltf);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
     
+    const container = document.getElementById('avatar-container');
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+    container.appendChild(renderer.domElement);
+
+    // Camera setup
+    const camera = new THREE.PerspectiveCamera(
+      45, container.clientWidth / container.clientHeight);
+    camera.position.set(0.2, 0.5, 1);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.enablePan = false;
+    controls.enableZoom = false;
+    controls.minDistance = 3;
+    controls.minPolarAngle = 1.4;
+    controls.maxPolarAngle = 1.4;
+    controls.target = new THREE.Vector3(0, 0.75, 0);
+    controls.update();
+
+    // Scene setup
+    const scene = new THREE.Scene();
+
+    // Lighting setup
+    scene.add(new THREE.AmbientLight());
+
+    const spotlight = new THREE.SpotLight(0xffffff, 20, 8, 1);
+    spotlight.penumbra = 0.5;
+    spotlight.position.set(0, 4, 2);
+    spotlight.castShadow = true;
+    scene.add(spotlight);
+
+    const keyLight = new THREE.DirectionalLight(0xffffff, 2);
+    keyLight.position.set(1, 1, 2);
+    keyLight.lookAt(new THREE.Vector3());
+    scene.add(keyLight);
+
+    // Load avatar
     const avatar = gltf.scene;
-    console.log('Avatar scene:', avatar);
-    console.log('Avatar children:', avatar.children.length);
-    
-    // Calculate bounds
-    const box = new THREE.Box3().setFromObject(avatar);
-    const size = box.getSize(new THREE.Vector3());
-    console.log('Avatar size:', size);
-    const maxDimension = Math.max(size.x, size.y, size.z);
-    
-    // Scale appropriately
-    const scale = 1.5 / maxDimension;
-    console.log('Scale factor:', scale);
-    avatar.scale.setScalar(scale);
-    avatar.position.set(0, 0, 0);
-
-    // Enhance materials
     avatar.traverse((child) => {
-      if (child.isMesh && child.material) {
-        const materials = Array.isArray(child.material) ? child.material : [child.material];
-        materials.forEach((mat) => {
-          mat.needsUpdate = true;
-          if (mat.color) {
-            mat.color.multiplyScalar(0.7);
-          }
-          if (mat.metalness !== undefined) mat.metalness = 0.4;
-          if (mat.roughness !== undefined) mat.roughness = 0.6;
-        });
+      if (child.isMesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+    scene.add(avatar);
+
+    // Create pedestal
+    const groundGeometry = new THREE.CylinderGeometry(0.6, 0.6, 0.1, 64);
+    const groundMaterial = new THREE.MeshStandardMaterial();
+    const groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
+    groundMesh.castShadow = false;
+    groundMesh.receiveShadow = true;
+    groundMesh.position.y -= 0.05;
+    scene.add(groundMesh);
+
+    // Load animations
+    const mixer = new THREE.AnimationMixer(avatar);
+    const clips = gltf.animations;
+    const waveClip = THREE.AnimationClip.findByName(clips, 'mixamo.com.003');
+    const stumbleClip = THREE.AnimationClip.findByName(clips, 'mixamo.com.005');
+    const waveAction = mixer.clipAction(waveClip);
+    const stumbleAction = mixer.clipAction(stumbleClip);
+
+    let isStumbling = false;
+    const raycaster = new THREE.Raycaster();
+    container.addEventListener('mousedown', (ev) => {
+      const coords = {
+        x: (ev.offsetX / container.clientWidth) * 2 - 1,
+        y: -(ev.offsetY / container.clientHeight) * 2 + 1
+      };
+
+      raycaster.setFromCamera(coords, camera);
+      const intersections = raycaster.intersectObject(avatar);
+  
+      if (intersections.length > 0) {
+        if (isStumbling) return;
+
+        isStumbling = true;
+        stumbleAction.reset();
+        stumbleAction.play();
+        waveAction.crossFadeTo(stumbleAction, 0.3);
+
+        setTimeout(() => {
+          waveAction.reset();
+          waveAction.play();
+          stumbleAction.crossFadeTo(waveAction, 1);
+          setTimeout(() => isStumbling = false, 1000);
+        }, 4000)
       }
     });
 
-    scene.add(avatar);
-    console.log('Avatar added to scene');
-    console.log('Scene children:', scene.children.length);
-    
-    // Load animations
-    let mixer = null;
-    let currentAction = null;
-    
-    if (gltf.animations && gltf.animations.length > 0) {
-      console.log('Available animations:', gltf.animations.map(a => a.name));
-      
-      mixer = new THREE.AnimationMixer(avatar);
-      const clips = gltf.animations;
-      
-      // Find and store animation clips by name
-      const waveClip = THREE.AnimationClip.findByName(clips, 'mixamo.com:003');
-      const stumbleClip = THREE.AnimationClip.findByName(clips, 'mixamo.com:005');
-      const waveAction = mixer.clipAction(waveClip);
-      const stumbleAction = mixer.clipAction(stumbleClip);
-      
-      currentAction = waveAction;
-      currentAction.play();
-      
-      // Store actions for potential UI control
-      window.avatarAnimations = {
-        wave: waveAction,
-        stumble: stumbleAction,
-        mixer: mixer,
-        play: (actionName) => {
-          if (window.avatarAnimations[actionName]) {
-            if (currentAction) currentAction.stop();
-            currentAction = window.avatarAnimations[actionName];
-            currentAction.play();
-          }
-        }
-      };
-      
-      console.log('Animations loaded and ready');
-    } else {
-      console.warn('No animations found in model');
-    }
-    
-    if (loadingElement) {
-      loadingElement.style.display = 'none';
-    }
+    window.addEventListener('resize', () => {
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+    });
 
-    // Animate
     const clock = new THREE.Clock();
     function animate() {
       requestAnimationFrame(animate);
-      const delta = clock.getDelta();
-      
-      if (mixer) {
-        mixer.update(delta);
-      }
-      
-      controls.update();
+      mixer.update(clock.getDelta());
       renderer.render(scene, camera);
     }
-    console.log('Starting animation loop');
+
     animate();
-
-    // Handle resize
-    window.addEventListener('resize', () => {
-      const width = container.clientWidth;
-      const height = container.clientHeight;
-      camera.aspect = width / height;
-      camera.updateProjectionMatrix();
-      renderer.setSize(width, height);
-    });
-
-  } catch (error) {
-    console.error('Error loading avatar:', error);
-    if (loadingElement) {
-      loadingElement.innerText = 'Failed to load avatar';
-      loadingElement.style.color = '#ff6b6b';
-    }
-  }
-}
-
-// Initialize when DOM is ready
-console.log('Avatar.js loaded, document.readyState:', document.readyState);
-if (document.readyState === 'loading') {
-  console.log('Waiting for DOMContentLoaded...');
-  document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOMContentLoaded fired, initializing avatar');
-    initAvatar();
-  });
-} else {
-  console.log('DOM already loaded, initializing avatar immediately');
-  initAvatar();
+    waveAction.play();
 }
