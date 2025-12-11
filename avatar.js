@@ -12,11 +12,7 @@ function loadModel() {
       setupScene(gltf);
       document.getElementById('avatar-loading').style.display = 'none';
     }, 
-    (xhr) => {
-      const percentCompletion = Math.round((xhr.loaded / xhr.total) * 100);
-      document.getElementById('avatar-loading').innerText = `LOADING... ${percentCompletion}%`
-      console.log(`Loading model... ${percentCompletion}%`);
-    }, 
+    undefined,
     (error) => {
       console.log(error);
     }
